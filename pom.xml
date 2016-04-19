@@ -118,8 +118,9 @@
           <version>2.6</version>
           <configuration>
             <warName>ProgessPrint</warName>
-            <outputDirectory>D:\Applications\tomcat\apache-tomcat-7.0.54\webapps</outputDirectory>
+            <outputDirectory>${env.TOMCAT_HOME_DEPLOY}</outputDirectory>
           </configuration>
+            
         </plugin>
     </plugins>
 </build>
