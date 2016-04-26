@@ -35,6 +35,8 @@ import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import it.progess.model.PrintDocument;
+import it.progess.model.PrintFoot;
+import it.progess.model.PrintHead;
 import it.progess.model.PrintRow;
 
 
@@ -74,6 +76,21 @@ public class PrintEngine {
 	public static final String FIELD_ROW_AMOUNT = "riga_importo";
 	public static final String FIELD_ROW_TAXRATE = "riga_iva";
 	
+	public static final String FIELD_FOOTER_TAX="imponibile";
+	public static final String FIELD_FOOTER_TAX_4="iva_4";
+	public static final String FIELD_FOOTER_PRICE_4="impo_4";
+	public static final String FIELD_FOOTER_TOT_4="tot_4";
+	public static final String FIELD_FOOTER_PRICE="imposta";
+	public static final String FIELD_FOOTER_HOLDING="ritenuta";
+	public static final String FIELD_FOOTER_PRICE_10="impo_10";
+	public static final String FIELD_FOOTER_TOT_10="tot_10";
+	public static final String FIELD_FOOTER_TAX_10="iva_10";
+	public static final String FIELD_FOOTER_TOT_22="tot_22";
+	public static final String FIELD_FOOTER_TAX_22="iva_22";
+	public static final String FIELD_FOOTER_PRICE_22="impo_22";
+	public static final String FIELD_FOOTER_NOTE="note";
+	public static final String FIELD_FOOTER_TOT="totale";
+	
 	public static void createPDF(PrintDocument doc,String sourcePath,String destinationPath){
 		/**LOAD PDF TEMPLATE**/
 		try{
@@ -86,7 +103,7 @@ public class PrintEngine {
         	Rectangle pageSize = reader.getPageSize(1);
         	AcroFields fields = reader.getAcroFields();
         	//Calculate Rows per page
-			
+        				
         	int rowsPerPage = getRowsPerPage(pageSize,fields);
 			//Calculate number of page to print
         	int pagesToPrint = getPagesToPrint(doc,rowsPerPage);
@@ -101,6 +118,7 @@ public class PrintEngine {
     			Map<Integer,TreeSet<PrintRow>> map =getRowListPerPage(doc, pagesToPrint, rowsPerPage);
     			PdfContentByte canvas = pdfs.getOverContent(1);
     			printRows(map.get(0), pdfs.getAcroFields(), canvas);
+    			printFooter(doc, pdfs.getAcroFields());
     			pdfs.close();
     			reader.close();
         	}else{
@@ -183,22 +201,23 @@ public class PrintEngine {
 		return pages;
 	}
 	private static void printHead(PrintDocument doc,AcroFields field) throws DocumentException,IOException{
-		setField(field, FIELD_COMPANY_NAME, doc.getHead().getCompany_name());
-		setField(field, FIELD_COMPANY_ADDRESS, doc.getHead().getCompany_address());
-		setField(field, FIELD_COMPANY_ADDRESS2, doc.getHead().getCompany_address2());
-		setField(field, FIELD_COMPANY_PI, doc.getHead().getCompany_ID());
-		setField(field, FIELD_COMPANY_CF, doc.getHead().getCompany_taxcode());
-		setField(field, FIELD_COMPANY_CODE, doc.getHead().getCompany_code());
-		setField(field, FIELD_CUSTOMER_ADDRESS, doc.getHead().getCustomer_address());
-		setField(field, FIELD_CUSTOMER_ADDRESS2, doc.getHead().getCustomer_address2());
-		setField(field, FIELD_CUSTOMER_CF, doc.getHead().getCustomer_taxcode());
-		setField(field, FIELD_CUSTOMER_NAME, doc.getHead().getCustomer_name());
-		setField(field, FIELD_COMPANY_PI, doc.getHead().getCustomer_ID());
-		setField(field, FIELD_DOCUMENT_NAME, doc.getHead().getDocument_name());
-		setField(field, FIELD_DOCUMENT_NUMBER, doc.getHead().getDocument_number());
-		setField(field, FIELD_DOCUMENT_DATE, doc.getHead().getDocument_date());
-		setField(field, FIELD_DOCUMENT_IBAN, doc.getHead().getDocument_iban());
-		setField(field, FIELD_DOCUMENT_PAYMENT, doc.getHead().getDocument_payment());
+		PrintHead printHead = doc.getHead();
+		setField(field, FIELD_COMPANY_NAME, printHead.getCompany_name());
+		setField(field, FIELD_COMPANY_ADDRESS, printHead.getCompany_address());
+		setField(field, FIELD_COMPANY_ADDRESS2, printHead.getCompany_address2());
+		setField(field, FIELD_COMPANY_PI, printHead.getCompany_ID());
+		setField(field, FIELD_COMPANY_CF, printHead.getCompany_taxcode());
+		setField(field, FIELD_COMPANY_CODE, printHead.getCompany_code());
+		setField(field, FIELD_CUSTOMER_ADDRESS, printHead.getCustomer_address());
+		setField(field, FIELD_CUSTOMER_ADDRESS2, printHead.getCustomer_address2());
+		setField(field, FIELD_CUSTOMER_CF, printHead.getCustomer_taxcode());
+		setField(field, FIELD_CUSTOMER_NAME, printHead.getCustomer_name());
+		setField(field, FIELD_COMPANY_PI, printHead.getCustomer_ID());
+		setField(field, FIELD_DOCUMENT_NAME, printHead.getDocument_name());
+		setField(field, FIELD_DOCUMENT_NUMBER, printHead.getDocument_number());
+		setField(field, FIELD_DOCUMENT_DATE, printHead.getDocument_date());
+		setField(field, FIELD_DOCUMENT_IBAN, printHead.getDocument_iban());
+		setField(field, FIELD_DOCUMENT_PAYMENT, printHead.getDocument_payment());
 		
 	}
 	private static void printRows(Set<PrintRow> rows,AcroFields field,PdfContentByte canvas) throws DocumentException,IOException{
@@ -233,6 +252,7 @@ public class PrintEngine {
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_description().substring(0,100),font8), rect_description.getLeft(),top,0);
     	    else
     	    	ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_description(),font8), rect_description.getLeft(),top,0);
+    	    
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_um(),font), rect_um.getLeft(),top , 0);
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_um(),font), rect_qty.getLeft(),top , 0);
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_price(),font), rect_price.getLeft(),top , 0);
@@ -242,6 +262,25 @@ public class PrintEngine {
         }
 	     
 	}
+	
+	private static void printFooter(PrintDocument doc,AcroFields field) throws DocumentException,IOException{
+		PrintFoot footer = doc.getFoot();
+		setField(field,FIELD_FOOTER_NOTE,footer.getFooter_note());
+		setField(field,FIELD_FOOTER_PRICE,footer.getFooter_price());
+		setField(field,FIELD_FOOTER_PRICE_10,footer.getFooter_price10());
+		setField(field,FIELD_FOOTER_PRICE_22,footer.getFooter_price22());
+		setField(field,FIELD_FOOTER_PRICE_4,footer.getFooter_price4());
+		setField(field,FIELD_FOOTER_TAX,footer.getFooter_tax());
+		setField(field,FIELD_FOOTER_TAX_10,footer.getFooter_tax10());
+		setField(field,FIELD_FOOTER_TAX_22,footer.getFooter_tax22());
+		setField(field,FIELD_FOOTER_TAX_4,footer.getFooter_tax4());
+		setField(field,FIELD_FOOTER_TOT,footer.getFooter_total());
+		setField(field,FIELD_FOOTER_TOT_10,footer.getFooter_total10());
+		setField(field,FIELD_FOOTER_TOT_22,footer.getFooter_total22());
+		setField(field,FIELD_FOOTER_TOT_4,footer.getFooter_total4());
+		setField(field,FIELD_FOOTER_HOLDING,footer.getFooter_withholding());		
+	}
+	
 	private static int getDescriptionRows(String description){
 		int rows = 0;
 		rows =(int)Math.floor(description.length()/20);
