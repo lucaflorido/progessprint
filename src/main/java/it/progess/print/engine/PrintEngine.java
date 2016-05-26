@@ -26,10 +26,13 @@ import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.AcroFields;
+import com.itextpdf.text.pdf.AcroFields.Item;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfImportedPage;
+import com.itextpdf.text.pdf.PdfName;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -90,6 +93,9 @@ public class PrintEngine {
 	public static final String FIELD_FOOTER_PRICE_22="impo_22";
 	public static final String FIELD_FOOTER_NOTE="note";
 	public static final String FIELD_FOOTER_TOT="totale";
+	
+	public static final int MAX_LENGTH_ROW_DESCRIPTION = 100;
+	public static final float DISTANCE_BETWEEN_ROW = new Float("8");
 	
 	public static void createPDF(PrintDocument doc,String sourcePath,String destinationPath){
 		/**LOAD PDF TEMPLATE**/
@@ -239,28 +245,84 @@ public class PrintEngine {
         Rectangle rect_taxrate = positions_taxrate.get(0).position;
         List<AcroFields.FieldPosition> positions_qty = field.getFieldPositions(FIELD_ROW_QUANTITY);
         Rectangle rect_qty = positions_qty.get(0).position;
+        float width  = rect_description.getWidth();
         for (Iterator<PrintRow> it = rows.iterator();it.hasNext();){
         	PrintRow row = it.next();
         	FontFactory.registerDirectories();
-
+        	
         	Font font = FontFactory.getFont("Arial");
         	font.setSize(10);
         	Font font8 = FontFactory.getFont("Arial");
         	font8.setSize(6);
-    	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_code(),font), left,top , 0);
-    	    if (row.getRow_description().length() >= 100)
-    	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_description().substring(0,100),font8), rect_description.getLeft(),top,0);
-    	    else
-    	    	ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_description(),font8), rect_description.getLeft(),top,0);
+        	
+        	String desc=row.getRow_description();
+        	int length =desc.length();
+        	if (length >= MAX_LENGTH_ROW_DESCRIPTION){
+        		desc=desc.substring(0,MAX_LENGTH_ROW_DESCRIPTION);
+        		length =desc.length();
+        	}	
+        	
+        	BaseFont baseFont = font8.getBaseFont();
+        	float w = baseFont.getWidthPoint(desc,6);
+        	
+        	float nLine=1;
+        	if(w>width){
+        		nLine=w/width;
+        		nLine=new Float(Math.ceil(nLine));
+        		
+        	}
+      	
+        	ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_code(),font), left,top , 0);
+        	ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_code(),font), left,top , 0);
+        	
+        	int divide=length/(int)nLine;
+        	float topTem=top;
+        	int tempStart=0;
+	    	int tempEnd=divide;
+	    	String temp="";
+ 
+
+    	    for(int i=0;i<nLine;i++){  	    	    	    
+    	    	if(tempEnd>length){	    		   	    	
+    	    		temp=desc.substring(tempStart,length);
+    	    	}else{
+    	    		temp=desc.substring(tempStart,tempEnd);
+    	    	}	
+    	    	float wTemp = baseFont.getWidthPoint(temp,6);
+    	    	
+    	    	while(wTemp<width && tempEnd<length ){
+    	    		tempEnd++;
+    	    		temp=desc.substring(tempStart,tempEnd);
+    	    		wTemp = baseFont.getWidthPoint(temp,6);
+    	    	}
+    	    	ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(temp,font8), rect_description.getLeft(),topTem,0);  	    	
+    	    	tempStart=tempEnd;
+    	    	tempEnd= tempEnd+divide;
+    	    	topTem -= height+new Float("0.1");
+    	    	
+    	    }
+        	
     	    
+//    	    if (row.getRow_description().length() >= 100)
+//    	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_description().substring(0,100),font8), rect_description.getLeft(),top,0);
+//    	    else
+//    	    	ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_description(),font8), rect_description.getLeft(),top,0);
+//    	    
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_um(),font), rect_um.getLeft(),top , 0);
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_um(),font), rect_qty.getLeft(),top , 0);
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_price(),font), rect_price.getLeft(),top , 0);
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_total(),font), rect_amount.getLeft(),top , 0);
     	    ColumnText.showTextAligned(canvas, Element.ALIGN_LEFT,new Phrase(row.getRow_taxrate(),font), rect_taxrate.getLeft(),top , 0);
-	    	top -= height+8; 
+	    	 
+	       	
+	    	top=topTem;
+	    	top -= height+DISTANCE_BETWEEN_ROW;
         }
-	     
+    	
+    	
+    	
+    	
+    	
 	}
 	
 	private static void printFooter(PrintDocument doc,AcroFields field) throws DocumentException,IOException{

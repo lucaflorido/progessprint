@@ -73,7 +73,7 @@ public class Main {
 	        } catch (IOException e) {
 	            e.printStackTrace();
 	        }	*/
-		PrintEngine.createPDF(getDocument(), "D:/Projects/Progess/progess-print/src/main/java/testPDF.pdf", "resultPDF.pdf");
+		PrintEngine.createPDF(getDocument(), "D:/testPDF.pdf", "D:/resultPDF.pdf");
 	}
 	
 	public static PrintDocument getDocument(){
@@ -83,13 +83,15 @@ public class Main {
 		head.setCompany_name("TEST");
 		head.setCompany_address("Address1");
 		head.setCompany_fax("FAX");
-//		pd.setRows(new TreeSet<PrintRow>());
-//		for (int i =0;i<19;i++){
-//			PrintRow pr = new PrintRow();
-//			pr.setRow_position(i);
-//			pr.setRow_code("code "+i);
-//			pd.getRows().add(pr);
-//		}
+		pd.setRows(new TreeSet<PrintRow>());
+		for (int i =0;i<8;i++){
+			PrintRow pr = new PrintRow();
+			pr.setRow_position(i);
+			pr.setRow_code("code "+i);
+			pr.setRow_um("B"+i);
+			pr.setRow_description("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse vestibulum lectus vitae nullam.Si vis pacem para bellum");
+			pd.getRows().add(pr);
+		}
 		pd.setFoot(new PrintFoot());
 		PrintFoot foot = pd.getFoot();
 		foot.setFooter_note("note");

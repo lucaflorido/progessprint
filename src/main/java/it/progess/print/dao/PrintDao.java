@@ -27,11 +27,13 @@ public class PrintDao {
 		head.setCompany_address("Address1");
 		head.setCompany_fax("FAX");
 		pd.setRows(new TreeSet<PrintRow>());
-		for (int i =0;i<19;i++){
+		//for (int i =0;i<19;i++){
+		for (int i =0;i<9;i++){
 			PrintRow pr = new PrintRow();
 			pr.setRow_position(i);
 			pr.setRow_code("code "+i);
-			pr.setRow_description("Descrizione n "+i);
+			pr.setRow_um("B"+i);
+			pr.setRow_description("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse vestibulum lectus vitae nullam.Si vis pacem para bellum");
 			pd.getRows().add(pr);
 		}
 		pd.setFoot(new PrintFoot());
